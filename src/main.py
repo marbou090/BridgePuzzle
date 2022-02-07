@@ -2,13 +2,15 @@ import pyxel
 
 SCREEN_WIDTH = 200
 SCREEN_HEIGHT = 200
-NUM_INITIAL_NODE=10
+NUM_INITIAL_NODE=17
 
 class Vec2:
-    def __init__(self, x, y,node):
+    def __init__(self, x, y,node,number):
         self.x = x
         self.y = y
+        self.node_number=number
         self.node=node
+        
 
 class Bridge:
     def __init__(self):
@@ -17,10 +19,15 @@ class Bridge:
         #横6,縦9マスにする
         self.r_x = pyxel.rndi(1, 6)
         self.r_y=pyxel.rndi(1,9)
+
+        #ノードの番号を決める
+        self.r_number=pyxel.rndi(0,7)
+
         #ノード一個が16幅なので、通常ノードは0なので
         self.pos = Vec2(
             self.r_x*16,
             self.r_y*16,
+            self.r_number,
             self.node_key
         )
     
@@ -45,7 +52,7 @@ class App:
         pyxel.mouse(True)
         pyxel.load("bridgepicture.pyxres")
 
-        self.bridges = [Bridge() for _ in range(10)]
+        self.bridges = [Bridge() for _ in range(NUM_INITIAL_NODE)]
 
         pyxel.run(self.update, self.draw)
 
@@ -70,15 +77,15 @@ class App:
                     #ノードステータスが通常なら、選択ノードに変える
                     if bridge.node_key==0:
                         bridge.node_key=1
-                    #選択済みでもう一回クリックされたら通常に戻す
-                    elif bridge.node_key==1:
-                        bridge.node_key=0
+                #選択済みでもう一回クリックされたら通常に戻す（これはこのノードをクリックしてなくても行う）
+                elif bridge.node_key==1:
+                    bridge.node_key=0
 
     def draw(self):
         pyxel.cls(0)
 
         #ノードの描画
         for bridge in self.bridges:
-            pyxel.blt(bridge.pos.x, bridge.pos.y, 0, 0, bridge.node_state(bridge.node_key), 16, 16)
+            pyxel.blt(bridge.pos.x, bridge.pos.y, 0, bridge.r_number*16, bridge.node_state(bridge.node_key), 16, 16)
 
 App()
