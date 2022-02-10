@@ -31,6 +31,12 @@ class Bridge:
             self.node_key
         )
     
+    def return_node_index(self,bridge,bridges):
+        num_node = len(bridges)
+        for i in range(num_node):
+            if (bridge.pos.x == bridges[i].pos.x) and (bridge.pos.y == bridges[i].pos.y):
+                return i
+    
     
     def node_state(self,state_key):
         if state_key==0:
@@ -81,8 +87,6 @@ class Bridge:
             #y軸について隣り合っては作らない
             if (((bridge_tmp.r_y + 1) == bridges[i].r_y) or ((bridge_tmp.r_y - 1) == bridges[i].r_y)) and (bridge_tmp.r_x == bridges[i].r_x):
                 return False
-            
-
         return True
 
     
@@ -127,14 +131,22 @@ class Bridge:
                 bridges[i].node_key=0
         return bridges
     
-    def key_one2two(self,bridges):
+    def key_one2two(self,bridge,bridges):
         """
         2つ選択したらステータス1のほうはステータス2にする
         """
         num_node = len(bridges)
         for i in range(num_node):
-            if bridges[i].node_key==1:
+            #x軸かy軸が一緒だったらステータス2にする
+            if bridges[i].node_key==1 and (bridges[i].pos.x==bridge.pos.x or bridges[i].pos.y==bridge.pos.y):
                 bridges[i].node_key=2
+                bridges[self.return_node_index(bridge,bridges)].node_key=2
+                break
+        #一緒じゃなかったらステータス0に戻す
+        else:
+            for i in range(num_node):
+                if bridges[i].node_key==1:
+                    bridges[i].node_key=0
         return bridges
             
 
@@ -171,8 +183,7 @@ class App:
                         
                     #ノードステータスが通常かつ他に選択されたノードがあったら、そこの間にブリッジを繋げる
                     elif bridge.node_key==0 and bridge.is_node_select(self.bridges):
-                        bridge.node_key=2
-                        self.bridges=bridge.key_one2two(self.bridges)
+                        self.bridges=bridge.key_one2two(bridge,self.bridges)
 
                     #ノードクリックしてる子がいたところでbreakしないとステータス2にならないバグがおきる(ノードの順番の前後でステータス2ならないバグ)
                     break
