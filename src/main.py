@@ -45,6 +45,26 @@ class Bridge:
         else:
             return 0
     
+    def generate_bridge(self,max_node):
+        """
+        最初のノードを作る処理
+        """
+        bridges=[]
+        for _ in range(max_node):
+            while(True):
+                bridge_tmp=(Bridge())
+                bridge_len_tmp = len(bridges)
+                if bridge_len_tmp==0:
+                    bridges.append(bridge_tmp)
+                    break
+                for i in range(bridge_len_tmp):
+                    if (bridge_tmp.pos.x == bridges[i].pos.x) and (bridge_tmp.pos.y == bridges[i].pos.y):
+                        break
+                else:
+                    bridges.append(bridge_tmp)
+                    break
+        return bridges
+    
     def is_node_select(self,bridges):
         """
         ブリッジを繋げるとき、２つクリックで選択して、そこにブリッジをかけたい。
@@ -106,30 +126,7 @@ class App:
         pyxel.load("bridgepicture.pyxres")
 
         #NUM_INITIAL_NODEの数だけ同じところに生成しないように気をつけながらノードを生成する
-        self.bridges = []
-        for _ in range(NUM_INITIAL_NODE):
-            generate_frag=True
-            while(generate_frag):
-                bridge_tmp=(Bridge())
-                bridge_len_tmp = len(self.bridges)
-                if bridge_len_tmp!=0:
-                    for i in range(bridge_len_tmp):
-                        if (bridge_tmp.pos.x == self.bridges[i].pos.x) and (bridge_tmp.pos.y == self.bridges[i].pos.y):
-                            break
-                    else:
-                        self.bridges.append(bridge_tmp)
-                        generate_frag=False
-                else:
-                    self.bridges.append(bridge_tmp)
-                    break
-
-                if generate_frag==False:
-                    break
-
-                
-                
-                            
-
+        self.bridges = Bridge().generate_bridge(NUM_INITIAL_NODE)
         pyxel.run(self.update, self.draw)
 
     def update_bridge(self):
@@ -155,6 +152,7 @@ class App:
                     elif bridge.node_key==0 and bridge.is_node_select(self.bridges):
                         bridge.node_key=2
                         self.bridges=bridge.key_one2two(self.bridges)
+
                     #ノードクリックしてる子がいたところでbreakしないとステータス2にならないバグがおきる(ノードの順番の前後でステータス2ならないバグ)
                     break
                     
