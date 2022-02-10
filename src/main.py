@@ -138,7 +138,8 @@ class Bridge:
         num_node = len(bridges)
         for i in range(num_node):
             #x軸かy軸が一緒だったらステータス2にする
-            if bridges[i].node_key==1 and (bridges[i].pos.x==bridge.pos.x or bridges[i].pos.y==bridge.pos.y):
+            
+            if self.judge_key_one2two(bridge,bridges[i],bridges):
                 bridges[i].node_key=2
                 bridges[self.return_node_index(bridge,bridges)].node_key=2
                 break
@@ -148,6 +149,61 @@ class Bridge:
                 if bridges[i].node_key==1:
                     bridges[i].node_key=0
         return bridges
+
+    def judge_key_one2two(self,node1,node2,bridges):
+        """
+        ノード2つについてブリッジを繋げて良いのかを判定する
+        """
+        if node2.node_key==1:
+            
+            #x軸かy軸が一緒かどうか、間にノードはいないか
+            
+            if node2.pos.x==node1.pos.x and self.is_node_between(node1,node2,"x",bridges):
+                #間に他のノードがいないか
+                return True
+                
+            if node2.pos.y==node1.pos.y and self.is_node_between(node1,node2,"y",bridges):
+                return True
+        return False
+                    
+    
+    def is_node_between(self,node1,node2,axis,bridges):
+        """
+        ノード１とノード２の間に他ノードがいないかを判別する。axisがxなら「x軸が一緒」、yなら「yが一緒」
+        """
+        if axis=="x":
+            node1_position = node1.pos.y
+            node2_position = node2.pos.y
+
+
+            node_max = max(node1_position,node2_position)
+            node_min = min(node1_position,node2_position)
+
+            num_node = len(bridges)
+            for i in range(num_node):
+                if bridges[i].pos.y >node_min and bridges[i].pos.y <node_max and bridges[i].pos.x == node1.pos.x:
+                    return False
+            
+            return True
+        
+        if axis=="y":
+            node1_position = node1.pos.x
+            node2_position = node2.pos.x
+
+
+            node_max = max(node1_position,node2_position)
+            node_min = min(node1_position,node2_position)
+
+            num_node = len(bridges)
+            for i in range(num_node):
+                if bridges[i].pos.x >node_min and bridges[i].pos.x <node_max and bridges[i].pos.y == node1.pos.y:
+                    return False
+            
+            return True
+
+                    
+                    
+                
             
 
 
@@ -183,6 +239,7 @@ class App:
                         
                     #ノードステータスが通常かつ他に選択されたノードがあったら、そこの間にブリッジを繋げる
                     elif bridge.node_key==0 and bridge.is_node_select(self.bridges):
+                        
                         self.bridges=bridge.key_one2two(bridge,self.bridges)
 
                     #ノードクリックしてる子がいたところでbreakしないとステータス2にならないバグがおきる(ノードの順番の前後でステータス2ならないバグ)
