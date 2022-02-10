@@ -5,14 +5,17 @@ SCREEN_HEIGHT = 200
 NUM_INITIAL_NODE=17
 
 class Vec2:
-    def __init__(self, x, y,node,number,node):
+    def __init__(self, x, y,node,number,bridge_index):
         self.x = x
         self.y = y
         self.node_number=number
         self.node=node
-        self.node=node
+        self.bridge_index_list=[]
 
-
+class Vec1:
+    def __init__(self,x,y):
+        self.x=x
+        self.y=y
         
 
 class Node:
@@ -32,7 +35,7 @@ class Node:
             self.r_y*16,
             0,
             self.r_number,
-            0
+            []
         )
         
     
@@ -97,7 +100,6 @@ class Node:
     
     def is_node_select(self,nodes):
         """
-        ブリッジを繋げるとき、２つクリックで選択して、そこにブリッジをかけたい。
         クリック１つ目がすでにあるかどうかの判定をしてTrue or Falseで返したい。
         """
         num_node = len(nodes)
@@ -136,7 +138,7 @@ class Node:
                 nodes[i].pos.node=0
         return nodes
     
-    def key_one2two(self,node,nodes):
+    def key_one2two(self,node,nodes,bridges):
         """
         2つ選択したらステータス1のほうはステータス2にする
         """
@@ -144,8 +146,13 @@ class Node:
         for i in range(num_node):
             #x軸かy軸が一緒で、間にノードがいなかったらステータスを2にする
             if self.judge_key_one2two(node,nodes[i],nodes):
-                nodes[i].pos.node=2
+                nodes[i].pos.node=2 
                 nodes[self.return_node_index(node,nodes)].pos.node=2
+
+                #ブリッジをかけるので、ブリッジリストにいれるインデックスをノード側で持っておく
+                nodes[i].pos.bridge_index_list.append(len(bridges))
+                nodes[self.return_node_index(node,nodes)].pos.bridge_index_list.append(len(bridges)-1)
+                
                 #ブリッジをかける処理
                 break
         #一緒じゃなかったらステータス0に戻す
@@ -205,11 +212,30 @@ class Node:
                     return False
             
             return True
+    def find_index_pair(self,nodes,index):
+        """
+        投げられたブリッジインデックスをもつノード返す。つまり返すのはノード２つ。
+        """
+        return_list=[]
+        for i in range(len(nodes)):
+            for t in range(len(nodes[i].pos.bridge_index_list)):
+                if nodes[i].pos.bridge_index_list[t] == index:
+                    return_list.append(nodes[i])
+        return return_list
 
-                    
-                    
-                
-            
+class Bridge:
+    def __init__(self, x1, y1, x2, y2):
+        self.pos1=Vec1(
+            x1,
+            y1
+        )
+        self.pos2=Vec1(
+            x2,
+            y2
+        )
+    
+    
+    
 
 
 
@@ -217,10 +243,11 @@ class App:
     def __init__(self):
         pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT,title="nodePuzzle")
         pyxel.mouse(True)
-        pyxel.load("nodepicture.pyxres")
+        pyxel.load("bridgepicture.pyxres")
 
         #NUM_INITIAL_NODEの数だけ同じところに生成しないように気をつけながらノードを生成する
         self.nodes = Node().generate_node(NUM_INITIAL_NODE)
+        self.bridges=[]
         pyxel.run(self.update, self.draw)
 
     def update_node(self):
@@ -245,7 +272,7 @@ class App:
                         
                     #ノードステータスが通常かつ他に選択されたノードがあったら、そこの間にブリッジを繋げる
                     elif node.pos.node==0 and node.is_node_select(self.nodes):
-                        self.nodes=node.key_one2two(node,self.nodes)
+                        self.nodes=node.key_one2two(node,self.nodes,self.bridges)
 
                     #ノードクリックしてる子がいたところでbreakしないとステータス2にならないバグがおきる(ノードの順番の前後でステータス2ならないバグ)
                     break
@@ -254,15 +281,28 @@ class App:
             else:
                 self.nodes = node.key_one_initialize(self.nodes)
         
+    def update_bridge(self,nodes):
         #ブリッジを繋げる処理
-        
-        #ブリッジを繋げるために、道中に他ノードがいないか判定する
+        node_index=0
+        self.bridges=[]
+        #ブリッジのインデックス０から順にノードのブリッジインデックスリストを見ていき、
+        #インデックスがあればそこのをブリッジにいれる
+        while(True):
+            index_node_list=nodes[0].find_index_pair(nodes,node_index)
+            #まだ橋を一個もかけてないとかのときは抜ける
+            if len(index_node_list)<=node_index or len(index_node_list)==0:
+                break
+            #ここのx座標とかy座標の調節はまったくしてない
+            self.bridges.append(Bridge(index_node_list[node_index].pos.x+16,index_node_list[node_index].pos.y,index_node_list[node_index].pos.x,index_node_list[node_index].pos.y))
+            node_index=node_index+1
+            
 
     def update(self):
         # 終わりボタン(q)
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
         self.update_node()
+        self.update_bridge(self.nodes)
 
 
     def draw(self):
@@ -271,5 +311,7 @@ class App:
         #ノードの描画
         for node in self.nodes:
             pyxel.blt(node.pos.x, node.pos.y, 0, node.pos.node_number*16, node.node_state(node.pos.node), 16, 16)
+        for bridge in self.bridges:
+            pyxel.blt(bridge.pos1.x,bridge.pos2.x,0,48,0,16,16)
 
 App()
