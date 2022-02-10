@@ -67,13 +67,33 @@ class Bridge:
             print(f"X : {bridge.r_x}, Y : {bridge.r_y}, KEY : {bridge.node_key}")
         print("-----------------")
     
-    def key_initialize(self,bridges):
+    def key_all_initialize(self,bridges):
         """
-        ノードでないところをクリックしたらステータスをクリアする
+        全てのステータスを初期化する
         """
         num_node = len(bridges)
         for i in range(num_node):
             bridges[i].node_key=0
+        return bridges
+    
+    def key_one_initialize(self,bridges):
+        """
+        ステータス1のものは、ノードでないてきとうなところをクリックしたらステータス0に戻す
+        """
+        num_node = len(bridges)
+        for i in range(num_node):
+            if bridges[i].node_key==1:
+                bridges[i].node_key=0
+        return bridges
+    
+    def key_one2two(self,bridges):
+        """
+        2つ選択したらステータス1のほうはステータス2にする
+        """
+        num_node = len(bridges)
+        for i in range(num_node):
+            if bridges[i].node_key==1:
+                bridges[i].node_key=2
         return bridges
             
 
@@ -85,6 +105,7 @@ class App:
         pyxel.mouse(True)
         pyxel.load("bridgepicture.pyxres")
 
+        #NUM_INITIAL_NODEの数だけ同じところに生成しないように気をつけながらノードを生成する
         self.bridges = []
         for _ in range(NUM_INITIAL_NODE):
             generate_frag=True
@@ -133,13 +154,13 @@ class App:
                     #ノードステータスが通常かつ他に選択されたノードがあったら、そこの間にブリッジを繋げる
                     elif bridge.node_key==0 and bridge.is_node_select(self.bridges):
                         bridge.node_key=2
-                    else:
-                        bridge.node_key=1
+                        self.bridges=bridge.key_one2two(self.bridges)
+                    #ノードクリックしてる子がいたところでbreakしないとステータス2にならないバグがおきる(ノードの順番の前後でステータス2ならないバグ)
                     break
                     
                 #選択済みでてきとうなところクリックされたら通常に戻す（これはこのノードをクリックしてなくても行う）
             else:
-                self.bridges = bridge.key_initialize(self.bridges)
+                self.bridges = bridge.key_one_initialize(self.bridges)
         
         #ブリッジを繋げるために、xかyが同じであるか判定する
         
