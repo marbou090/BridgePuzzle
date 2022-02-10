@@ -5,16 +5,19 @@ SCREEN_HEIGHT = 200
 NUM_INITIAL_NODE=17
 
 class Vec2:
-    def __init__(self, x, y,node,number):
+    def __init__(self, x, y,node,number,node):
         self.x = x
         self.y = y
         self.node_number=number
         self.node=node
+        self.node=node
+
+
         
 
-class Bridge:
+class Node:
     def __init__(self):
-        self.node_key= 0 #最初は通常ノードから。通常ノードはは0,0に格納されてるタイルなので0
+        #self.node_key= 0 #最初は通常ノードから。通常ノードはは0,0に格納されてるタイルなので0
 
         #横6,縦9マスにする
         self.r_x = pyxel.rndi(0, 6)
@@ -27,14 +30,16 @@ class Bridge:
         self.pos = Vec2(
             self.r_x*16,
             self.r_y*16,
+            0,
             self.r_number,
-            self.node_key
+            0
         )
+        
     
-    def return_node_index(self,bridge,bridges):
-        num_node = len(bridges)
+    def return_node_index(self,node,nodes):
+        num_node = len(nodes)
         for i in range(num_node):
-            if (bridge.pos.x == bridges[i].pos.x) and (bridge.pos.y == bridges[i].pos.y):
+            if (node.pos.x == nodes[i].pos.x) and (node.pos.y == nodes[i].pos.y):
                 return i
     
     
@@ -55,119 +60,119 @@ class Bridge:
         """
         最初のノードを作る処理
         """
-        bridges=[]
+        nodes=[]
         for _ in range(max_node):
             while(True):
-                bridge_tmp=(Bridge())
-                bridge_len_tmp = len(bridges)
+                node_tmp=(Node())
+                node_len_tmp = len(nodes)
                 #一個目であればそのままいれる
-                if bridge_len_tmp==0:
-                    bridges.append(bridge_tmp)
+                if node_len_tmp==0:
+                    nodes.append(node_tmp)
                     break
 
                 #判定関数でヨシが出たらそこに生成
-                if bridge_tmp.generate_node_judge(bridges,bridge_tmp):
-                    bridges.append(bridge_tmp)
+                if node_tmp.generate_node_judge(nodes,node_tmp):
+                    nodes.append(node_tmp)
                     break
-        return bridges
+        return nodes
     
-    def generate_node_judge(self,bridges,bridge_tmp):
+    def generate_node_judge(self,nodes,node_tmp):
         """
         既存のノードと位置を比べてそこにノード作って良いか判定
         """
-        bridge_len_tmp=len(bridges)
-        for i in range(bridge_len_tmp):
+        node_len_tmp=len(nodes)
+        for i in range(node_len_tmp):
             #同じ場所には作らない
-            if (bridge_tmp.pos.x == bridges[i].pos.x) and (bridge_tmp.pos.y == bridges[i].pos.y):
+            if (node_tmp.pos.x == nodes[i].pos.x) and (node_tmp.pos.y == nodes[i].pos.y):
                 return False
 
             #x軸について隣り合っては作らない
-            if (((bridge_tmp.r_x + 1) == bridges[i].r_x) or ((bridge_tmp.r_x - 1) == bridges[i].r_x)) and (bridge_tmp.pos.y == bridges[i].pos.y):
+            if (((node_tmp.r_x + 1) == nodes[i].r_x) or ((node_tmp.r_x - 1) == nodes[i].r_x)) and (node_tmp.pos.y == nodes[i].pos.y):
                 return False
             #y軸について隣り合っては作らない
-            if (((bridge_tmp.r_y + 1) == bridges[i].r_y) or ((bridge_tmp.r_y - 1) == bridges[i].r_y)) and (bridge_tmp.r_x == bridges[i].r_x):
+            if (((node_tmp.r_y + 1) == nodes[i].r_y) or ((node_tmp.r_y - 1) == nodes[i].r_y)) and (node_tmp.r_x == nodes[i].r_x):
                 return False
         return True
 
     
-    def is_node_select(self,bridges):
+    def is_node_select(self,nodes):
         """
         ブリッジを繋げるとき、２つクリックで選択して、そこにブリッジをかけたい。
         クリック１つ目がすでにあるかどうかの判定をしてTrue or Falseで返したい。
         """
-        num_node = len(bridges)
+        num_node = len(nodes)
         for i in range(num_node):
-            bridge=bridges[i]
-            if bridge.node_key==1:
+            node=nodes[i]
+            if node.pos.node==1:
                 return True
         return False
     
-    def print_all_bridge(self,bridges):
+    def print_all_node(self,nodes):
         """
         デバック用の全てのブリッジのステータスを確認できるところ
         """
-        num_node = len(bridges)
+        num_node = len(nodes)
         for i in range(num_node):
-            bridge=bridges[i]
-            print(f"X : {bridge.r_x}, Y : {bridge.r_y}, KEY : {bridge.node_key}")
+            node=nodes[i]
+            print(f"X : {node.r_x}, Y : {node.r_y}, KEY : {node.pos.node}")
         print("-----------------")
     
-    def key_all_initialize(self,bridges):
+    def key_all_initialize(self,nodes):
         """
         全てのステータスを初期化する
         """
-        num_node = len(bridges)
+        num_node = len(nodes)
         for i in range(num_node):
-            bridges[i].node_key=0
-        return bridges
+            nodes[i].pos.node=0
+        return nodes
     
-    def key_one_initialize(self,bridges):
+    def key_one_initialize(self,nodes):
         """
         ステータス1のものは、ノードでないてきとうなところをクリックしたらステータス0に戻す
         """
-        num_node = len(bridges)
+        num_node = len(nodes)
         for i in range(num_node):
-            if bridges[i].node_key==1:
-                bridges[i].node_key=0
-        return bridges
+            if nodes[i].pos.node==1:
+                nodes[i].pos.node=0
+        return nodes
     
-    def key_one2two(self,bridge,bridges):
+    def key_one2two(self,node,nodes):
         """
         2つ選択したらステータス1のほうはステータス2にする
         """
-        num_node = len(bridges)
+        num_node = len(nodes)
         for i in range(num_node):
-            #x軸かy軸が一緒だったらステータス2にする
-            
-            if self.judge_key_one2two(bridge,bridges[i],bridges):
-                bridges[i].node_key=2
-                bridges[self.return_node_index(bridge,bridges)].node_key=2
+            #x軸かy軸が一緒で、間にノードがいなかったらステータスを2にする
+            if self.judge_key_one2two(node,nodes[i],nodes):
+                nodes[i].pos.node=2
+                nodes[self.return_node_index(node,nodes)].pos.node=2
+                #ブリッジをかける処理
                 break
         #一緒じゃなかったらステータス0に戻す
         else:
             for i in range(num_node):
-                if bridges[i].node_key==1:
-                    bridges[i].node_key=0
-        return bridges
+                if nodes[i].pos.node==1:
+                    nodes[i].pos.node=0
+        return nodes
 
-    def judge_key_one2two(self,node1,node2,bridges):
+    def judge_key_one2two(self,node1,node2,nodes):
         """
         ノード2つについてブリッジを繋げて良いのかを判定する
         """
-        if node2.node_key==1:
+        if node2.pos.node==1:
             
             #x軸かy軸が一緒かどうか、間にノードはいないか
             
-            if node2.pos.x==node1.pos.x and self.is_node_between(node1,node2,"x",bridges):
+            if node2.pos.x==node1.pos.x and self.is_node_between(node1,node2,"x",nodes):
                 #間に他のノードがいないか
                 return True
                 
-            if node2.pos.y==node1.pos.y and self.is_node_between(node1,node2,"y",bridges):
+            if node2.pos.y==node1.pos.y and self.is_node_between(node1,node2,"y",nodes):
                 return True
         return False
                     
     
-    def is_node_between(self,node1,node2,axis,bridges):
+    def is_node_between(self,node1,node2,axis,nodes):
         """
         ノード１とノード２の間に他ノードがいないかを判別する。axisがxなら「x軸が一緒」、yなら「yが一緒」
         """
@@ -179,9 +184,9 @@ class Bridge:
             node_max = max(node1_position,node2_position)
             node_min = min(node1_position,node2_position)
 
-            num_node = len(bridges)
+            num_node = len(nodes)
             for i in range(num_node):
-                if bridges[i].pos.y >node_min and bridges[i].pos.y <node_max and bridges[i].pos.x == node1.pos.x:
+                if nodes[i].pos.y >node_min and nodes[i].pos.y <node_max and nodes[i].pos.x == node1.pos.x:
                     return False
             
             return True
@@ -194,9 +199,9 @@ class Bridge:
             node_max = max(node1_position,node2_position)
             node_min = min(node1_position,node2_position)
 
-            num_node = len(bridges)
+            num_node = len(nodes)
             for i in range(num_node):
-                if bridges[i].pos.x >node_min and bridges[i].pos.x <node_max and bridges[i].pos.y == node1.pos.y:
+                if nodes[i].pos.x >node_min and nodes[i].pos.x <node_max and nodes[i].pos.y == node1.pos.y:
                     return False
             
             return True
@@ -210,46 +215,46 @@ class Bridge:
 
 class App:
     def __init__(self):
-        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT,title="BridgePuzzle")
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT,title="nodePuzzle")
         pyxel.mouse(True)
-        pyxel.load("bridgepicture.pyxres")
+        pyxel.load("nodepicture.pyxres")
 
         #NUM_INITIAL_NODEの数だけ同じところに生成しないように気をつけながらノードを生成する
-        self.bridges = Bridge().generate_node(NUM_INITIAL_NODE)
+        self.nodes = Node().generate_node(NUM_INITIAL_NODE)
         pyxel.run(self.update, self.draw)
 
-    def update_bridge(self):
-        num_node = len(self.bridges)
+    def update_node(self):
+        num_node = len(self.nodes)
         #クリックでブリッジを繋げる処理
         #クリックしたら
         
         if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
             for i in range(num_node):
-                bridge = self.bridges[i]
+                
+                node = self.nodes[i]
             
                 #マウスクリックの判定をしたいので、円の中心とマウスの距離だしたい
-                node_x = bridge.pos.x+8- pyxel.mouse_x
-                node_y = bridge.pos.y+8- pyxel.mouse_y
+                node_x = node.pos.x+8- pyxel.mouse_x
+                node_y = node.pos.y+8- pyxel.mouse_y
             
                 #半径より近いか（そのノードをクリックしているか）
                 if node_x*node_x+node_y*node_y<8*8:
                     #ノードステータスが通常かつ他に選択されたノードがなかったら、選択ステータスに変えるだけ
-                    if bridge.node_key==0 and not bridge.is_node_select(self.bridges):
-                        bridge.node_key=1
+                    if node.pos.node==0 and not node.is_node_select(self.nodes):
+                        node.pos.node=1
                         
                     #ノードステータスが通常かつ他に選択されたノードがあったら、そこの間にブリッジを繋げる
-                    elif bridge.node_key==0 and bridge.is_node_select(self.bridges):
-                        
-                        self.bridges=bridge.key_one2two(bridge,self.bridges)
+                    elif node.pos.node==0 and node.is_node_select(self.nodes):
+                        self.nodes=node.key_one2two(node,self.nodes)
 
                     #ノードクリックしてる子がいたところでbreakしないとステータス2にならないバグがおきる(ノードの順番の前後でステータス2ならないバグ)
                     break
                     
             #てきとうなところクリックされたらステータス1のノードはステータス0にする（これはこのノードをクリックしてなくても行う）
             else:
-                self.bridges = bridge.key_one_initialize(self.bridges)
+                self.nodes = node.key_one_initialize(self.nodes)
         
-        #ブリッジを繋げるために、xかyが同じであるか判定する
+        #ブリッジを繋げる処理
         
         #ブリッジを繋げるために、道中に他ノードがいないか判定する
 
@@ -257,15 +262,14 @@ class App:
         # 終わりボタン(q)
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
-        self.update_bridge()
+        self.update_node()
 
 
     def draw(self):
         pyxel.cls(0)
 
         #ノードの描画
-        for bridge in self.bridges:
-            
-            pyxel.blt(bridge.pos.x, bridge.pos.y, 0, bridge.r_number*16, bridge.node_state(bridge.node_key), 16, 16)
+        for node in self.nodes:
+            pyxel.blt(node.pos.x, node.pos.y, 0, node.pos.node_number*16, node.node_state(node.pos.node), 16, 16)
 
 App()
