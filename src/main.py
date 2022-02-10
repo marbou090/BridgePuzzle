@@ -56,6 +56,26 @@ class Bridge:
             if bridge.node_key==1:
                 return True
         return False
+    
+    def print_all_bridge(self,bridges):
+        """
+        デバック用の全てのブリッジのステータスを確認できるところ
+        """
+        num_node = len(bridges)
+        for i in range(num_node):
+            bridge=bridges[i]
+            print(f"X : {bridge.r_x}, Y : {bridge.r_y}, KEY : {bridge.node_key}")
+        print("-----------------")
+    
+    def key_initialize(self,bridges):
+        """
+        ノードでないところをクリックしたらステータスをクリアする
+        """
+        num_node = len(bridges)
+        for i in range(num_node):
+            bridges[i].node_key=0
+        return bridges
+            
 
 
 
@@ -84,6 +104,8 @@ class App:
 
                 if generate_frag==False:
                     break
+
+                
                 
                             
 
@@ -94,30 +116,30 @@ class App:
         #クリックでブリッジを繋げる処理
         #クリックしたら
         
-        for i in range(num_node):
-            bridge = self.bridges[i]
-           
-            #マウスクリックの判定をしたいので、円の中心とマウスの距離だしたい
-            node_x = bridge.pos.x+8- pyxel.mouse_x
-            node_y = bridge.pos.y+8- pyxel.mouse_y
-            if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
-                print(f"X : {bridge.r_x}, Y : {bridge.r_y}, NUMBER : {bridge.r_number}")
-                
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+            for i in range(num_node):
+                bridge = self.bridges[i]
+            
+                #マウスクリックの判定をしたいので、円の中心とマウスの距離だしたい
+                node_x = bridge.pos.x+8- pyxel.mouse_x
+                node_y = bridge.pos.y+8- pyxel.mouse_y
+            
                 #半径より近いか（そのノードをクリックしているか）
                 if node_x*node_x+node_y*node_y<8*8:
                     #ノードステータスが通常かつ他に選択されたノードがなかったら、選択ステータスに変えるだけ
                     if bridge.node_key==0 and not bridge.is_node_select(self.bridges):
                         bridge.node_key=1
-                    
+                        
                     #ノードステータスが通常かつ他に選択されたノードがあったら、そこの間にブリッジを繋げる
                     elif bridge.node_key==0 and bridge.is_node_select(self.bridges):
                         bridge.node_key=2
                     else:
-                        bridge.node_key=0
+                        bridge.node_key=1
+                    break
                     
                 #選択済みでてきとうなところクリックされたら通常に戻す（これはこのノードをクリックしてなくても行う）
-                else:
-                    bridge.node_key=0
+            else:
+                self.bridges = bridge.key_initialize(self.bridges)
         
         #ブリッジを繋げるために、xかyが同じであるか判定する
         
