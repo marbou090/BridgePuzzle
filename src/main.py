@@ -45,7 +45,7 @@ class Bridge:
         else:
             return 0
     
-    def generate_bridge(self,max_node):
+    def generate_node(self,max_node):
         """
         最初のノードを作る処理
         """
@@ -54,16 +54,37 @@ class Bridge:
             while(True):
                 bridge_tmp=(Bridge())
                 bridge_len_tmp = len(bridges)
+                #一個目であればそのままいれる
                 if bridge_len_tmp==0:
                     bridges.append(bridge_tmp)
                     break
-                for i in range(bridge_len_tmp):
-                    if (bridge_tmp.pos.x == bridges[i].pos.x) and (bridge_tmp.pos.y == bridges[i].pos.y):
-                        break
-                else:
+
+                #判定関数でヨシが出たらそこに生成
+                if bridge_tmp.generate_node_judge(bridges,bridge_tmp):
                     bridges.append(bridge_tmp)
                     break
         return bridges
+    
+    def generate_node_judge(self,bridges,bridge_tmp):
+        """
+        既存のノードと位置を比べてそこにノード作って良いか判定
+        """
+        bridge_len_tmp=len(bridges)
+        for i in range(bridge_len_tmp):
+            #同じ場所には作らない
+            if (bridge_tmp.pos.x == bridges[i].pos.x) and (bridge_tmp.pos.y == bridges[i].pos.y):
+                return False
+
+            #x軸について隣り合っては作らない
+            if (((bridge_tmp.r_x + 1) == bridges[i].r_x) or ((bridge_tmp.r_x - 1) == bridges[i].r_x)) and (bridge_tmp.pos.y == bridges[i].pos.y):
+                return False
+            #y軸について隣り合っては作らない
+            if (((bridge_tmp.r_y + 1) == bridges[i].r_y) or ((bridge_tmp.r_y - 1) == bridges[i].r_y)) and (bridge_tmp.r_x == bridges[i].r_x):
+                return False
+            
+
+        return True
+
     
     def is_node_select(self,bridges):
         """
@@ -126,7 +147,7 @@ class App:
         pyxel.load("bridgepicture.pyxres")
 
         #NUM_INITIAL_NODEの数だけ同じところに生成しないように気をつけながらノードを生成する
-        self.bridges = Bridge().generate_bridge(NUM_INITIAL_NODE)
+        self.bridges = Bridge().generate_node(NUM_INITIAL_NODE)
         pyxel.run(self.update, self.draw)
 
     def update_bridge(self):
@@ -156,7 +177,7 @@ class App:
                     #ノードクリックしてる子がいたところでbreakしないとステータス2にならないバグがおきる(ノードの順番の前後でステータス2ならないバグ)
                     break
                     
-                #選択済みでてきとうなところクリックされたら通常に戻す（これはこのノードをクリックしてなくても行う）
+            #てきとうなところクリックされたらステータス1のノードはステータス0にする（これはこのノードをクリックしてなくても行う）
             else:
                 self.bridges = bridge.key_one_initialize(self.bridges)
         
